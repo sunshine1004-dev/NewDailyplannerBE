@@ -1,2 +1,3 @@
-# UMGPLANNERBE
-UMG Planner Backend
+# DailyPLANNERBE
+
+Daily Planner Backend
