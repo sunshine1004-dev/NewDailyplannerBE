@@ -47,11 +47,9 @@ module.exports = {
       try {
         const { id } = args;
         const userId = getUserId(req);
-        console.log("here: ", userId);
         let thoughts = await Thought.find({ userId: userId }).sort({
           createdAt: -1,
         });
-        console.log(thoughts);
         if (!thoughts) {
           return {
             error: "Not Found!",

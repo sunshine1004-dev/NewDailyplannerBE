@@ -43,7 +43,6 @@ module.exports = {
       try {
         const { id, sheetId, type, title, actions } = args;
         const userId = getUserId(req);
-        console.log('todo: ', id, sheetId, type, title, actions, userId );
         let todo;
         if (id) {
           /* Add a new todo_item to an existing todo of a daily sheet */

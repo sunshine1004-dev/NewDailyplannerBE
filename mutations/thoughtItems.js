@@ -41,9 +41,7 @@ module.exports = {
     async resolve(_, args, req) {
       try {
         const { id, type, title, actions } = args;
-        console.log(type, title);
         const userId = getUserId(req);
-        console.log("thought: ", id, type, title, actions, userId);
         let thought;
         if (id) {
           /* Add a new thought_item to an existing thought of a daily sheet */
