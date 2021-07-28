@@ -10,17 +10,17 @@ const {
 } = qraphql;
 
 const Day = require("../models/day");
-const Todo = require("../models/todo");
-const TodoItem = require("../models/todoItem");
+const Thought = require("../models/thought");
+const ThoughtItem = require("../models/thoughtItem");
 const {
-  TodoType,
-  TodoItemType,
-  TodoItemActionType,
+  ThoughtType,
+  ThoughtItemType,
+  ThoughtItemActionType,
   DeleteResponseType,
 } = require("../schema/types");
 
-const TodoActionInputType = new GraphQLInputObjectType({
-  name: "TodoActionInputType",
+const ThoughtActionInputType = new GraphQLInputObjectType({
+  name: "ThoughtActionInputType",
   fields: () => ({
     _id: { type: GraphQLString },
     text: { type: GraphQLString },
@@ -29,37 +29,37 @@ const TodoActionInputType = new GraphQLInputObjectType({
 });
 
 module.exports = {
-  createTodoItem: {
-    type: TodoType,
+  createThoughtItem: {
+    type: ThoughtType,
     args: {
       id: { type: GraphQLID },
-      sheetId: { type: GraphQLID },
       title: { type: GraphQLString },
-      actions: { type: new GraphQLList(TodoActionInputType) },
+      actions: { type: new GraphQLList(ThoughtActionInputType) },
       type: { type: GraphQLString },
     },
 
     async resolve(_, args, req) {
       try {
-        const { id, sheetId, type, title, actions } = args;
+        const { id, type, title, actions } = args;
+        console.log(type, title);
         const userId = getUserId(req);
-        console.log('todo: ', id, sheetId, type, title, actions, userId );
-        let todo;
+        console.log("thought: ", id, type, title, actions, userId);
+        let thought;
         if (id) {
-          /* Add a new todo_item to an existing todo of a daily sheet */
-          todo = await Todo.findById(id);
-          if (!todo) {
+          /* Add a new thought_item to an existing thought of a daily sheet */
+          thought = await Thought.findById(id);
+          if (!thought) {
             return {
               error: "Not Found",
             };
           }
-          if (String(todo.userId) !== String(userId)) {
+          if (String(thought.userId) !== String(userId)) {
             return {
               error: "Not yours",
             };
           }
-          const todoItem = {
-            todoId: id,
+          const thoughtItem = {
+            thoughtId: id,
             title,
             actions: actions.map((action) => ({
               text: action.text,
@@ -69,29 +69,28 @@ module.exports = {
               actions.length && !actions.some((action) => !action.completed),
             createdAt: new Date(),
           };
-          const newTodoItem = new TodoItem(todoItem);
-          const newTodoItemRes = await newTodoItem.save();
-          todo.items.push(newTodoItemRes._id);
-          return await todo.save();
+          const newThoughtItem = new ThoughtItem(thoughtItem);
+          const newThoughtItemRes = await newThoughtItem.save();
+          thought.items.push(newThoughtItemRes._id);
+          return await thought.save();
         } else {
-          /* Create Todo block for the daily sheet then add a new todo_item */
-          /* Create Todo block for the daily sheet */
-          todo = {
+          /* Create thought block for the daily sheet then add a new thought_item */
+          /* Create thought block for the daily sheet */
+          thought = {
             userId,
-            sheetId,
             type,
             items: [],
             createdAt: new Date(),
           };
-          const newTodo = new Todo(todo);
-          const todoResult = await newTodo.save();
-          const sheet = await Day.findById(sheetId);
-          sheet.todos = sheet.todos || {};
-          sheet.todos[type] = todoResult._id;
-          await sheet.save();
-          /* Create todo_item and add it to the todos block */
-          const todoItem = {
-            todoId: todoResult._id,
+          const newThought = new Thought(thought);
+          const thoughtResult = await newThought.save();
+          // const sheet = await Day.findById(sheetId);
+          // sheet.thoughts = sheet.thoughts || {};
+          // sheet.thoughts[type] = thoughtResult._id;
+          // await sheet.save();
+          /* Create thought_item and add it to the thoughts block */
+          const thoughtItem = {
+            thoughtId: thoughtResult._id,
             title,
             actions: actions.map((action) => ({
               text: action.text,
@@ -101,37 +100,37 @@ module.exports = {
               actions.length && !actions.some((action) => !action.completed),
             createdAt: new Date(),
           };
-          const newTodoItem = new TodoItem(todoItem);
-          const newTodoItemRes = await newTodoItem.save();
-          await Todo.updateOne(
-            { _id: todoResult._id },
-            { $push: { items: newTodoItemRes._id } }
+          const newThoughtItem = new ThoughtItem(thoughtItem);
+          const newThoughtItemRes = await newThoughtItem.save();
+          await Thought.updateOne(
+            { _id: thoughtResult._id },
+            { $push: { items: newThoughtItemRes._id } }
           );
-          return await Todo.findById(todoResult._id);
+          return await Thought.findById(thoughtResult._id);
         }
       } catch (e) {
         console.log(e);
       }
     },
   },
-  updateTodoItem: {
-    type: TodoItemType,
+  updateThoughtItem: {
+    type: ThoughtItemType,
     args: {
       id: { type: GraphQLID },
       title: { type: GraphQLString },
-      actions: { type: new GraphQLList(TodoActionInputType) },
+      actions: { type: new GraphQLList(ThoughtActionInputType) },
     },
 
     async resolve(_, args, req) {
       try {
         const { id, ...data } = args;
-        let todoItem = await TodoItem.findById(id);
-        if (!todoItem) {
+        let thoughtItem = await ThoughtItem.findById(id);
+        if (!thoughtItem) {
           return {
             error: "Not Found!",
           };
         }
-        const todoItemDetails = {
+        const thoughtItemDetails = {
           title: data.title,
           actions: data.actions.map((action) => ({
             text: action.text,
@@ -141,14 +140,14 @@ module.exports = {
             data.actions.length &&
             !data.actions.some((action) => !action.completed),
         };
-        await TodoItem.updateOne({ _id: id }, { $set: todoItemDetails });
-        return await TodoItem.findById(id);
+        await ThoughtItem.updateOne({ _id: id }, { $set: thoughtItemDetails });
+        return await ThoughtItem.findById(id);
       } catch (e) {
         console.log(e);
       }
     },
   },
-  deleteTodoItem: {
+  deleteThoughtItem: {
     type: DeleteResponseType,
     args: {
       id: { type: GraphQLID },
@@ -157,17 +156,18 @@ module.exports = {
     async resolve(_, args, req) {
       try {
         const { id } = args;
-        let todoItem = await TodoItem.findById(id);
-        if (!todoItem) {
+        let thoughtItem = await ThoughtItem.findById(id);
+        if (!thoughtItem) {
           return {
             error: "Not Found!",
           };
         }
-        await TodoItem.findOneAndDelete({ _id: id });
-        await Todo.updateOne(
-          { _id: todoItem.todoId },
+        await ThoughtItem.findOneAndDelete({ _id: id });
+        await Thought.updateOne(
+          { _id: thoughtItem.thoughtId },
           { $pull: { items: { _id: id } } }
         );
+        await Thought.findOneAndDelete({ _id: thoughtItem.thoughtId });
         return {
           result: true,
         };
@@ -176,7 +176,7 @@ module.exports = {
       }
     },
   },
-  toggleTodoItemCompleted: {
+  toggleThoughtItemCompleted: {
     type: DeleteResponseType,
     args: {
       id: { type: GraphQLID },
@@ -185,15 +185,15 @@ module.exports = {
     async resolve(_, args, req) {
       try {
         const { id } = args;
-        let todoItem = await TodoItem.findById(id);
-        if (!todoItem) {
+        let thoughtItem = await ThoughtItem.findById(id);
+        if (!thoughtItem) {
           return {
             error: "Not Found!",
           };
         }
-        await TodoItem.updateOne(
+        await ThoughtItem.updateOne(
           { _id: id },
-          { $set: { completed: !todoItem.completed } }
+          { $set: { completed: !thoughtItem.completed } }
         );
         return {
           result: true,

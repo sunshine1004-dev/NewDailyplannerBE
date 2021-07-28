@@ -16,6 +16,17 @@ const {
 
 const Day = require("../models/day");
 
+const AddOrderResponseType = new GraphQLObjectType({
+  name: "AddOrderResponseType",
+  fields: () => ({
+    userId: { type: GraphQLID },
+    gratefulFor: { type: GraphQLString },
+    createdAt: {
+      type: DateScalarType,
+    },
+  }),
+});
+
 const UpdateSheetResponseType = new GraphQLObjectType({
   name: "UpdateSheetResponseType",
   fields: () => ({
@@ -54,6 +65,32 @@ const AccountabilityInputType = new GraphQLInputObjectType({
 });
 
 module.exports = {
+  addDay: {
+    type: AddOrderResponseType,
+    args: {
+      gratefulFor: { type: GraphQLString },
+    },
+
+    async resolve(_, args) {
+      try {
+        const { gratefulFor } = args;
+        const userId = getUserId(req);
+        const now = new Date();
+        const day = {
+          userId,
+          gratefulFor,
+          createdAt: now,
+        };
+
+        const newDay = new Day(day);
+        await newDay.save();
+
+        return day;
+      } catch (e) {
+        console.log(e);
+      }
+    },
+  },
   updateSheet: {
     type: UpdateSheetResponseType,
     args: {

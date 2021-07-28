@@ -12,6 +12,8 @@ const {
 
 const Todo = require("../models/todo");
 const TodoItem = require("../models/todoItem");
+const Thought = require("../models/thought");
+const ThoughtItem = require("../models/thoughtItem");
 
 const DateScalarType = new GraphQLScalarType({
   name: "Date",
@@ -123,6 +125,73 @@ const TodosType = new GraphQLObjectType({
   }),
 });
 
+const ThoughtItemActionType = new GraphQLObjectType({
+  name: "ThoughtItemActionType",
+  fields: () => ({
+    _id: { type: GraphQLString },
+    text: { type: GraphQLString },
+    completed: { type: GraphQLBoolean },
+  }),
+});
+
+const ThoughtItemType = new GraphQLObjectType({
+  name: "ThoughtItemType",
+  fields: () => ({
+    _id: { type: GraphQLString },
+    title: { type: GraphQLString },
+    actions: { type: new GraphQLList(ThoughtItemActionType) },
+    completed: { type: GraphQLBoolean },
+  }),
+});
+
+const ThoughtType = new GraphQLObjectType({
+  name: "ThoughtType",
+  fields: () => ({
+    _id: { type: GraphQLString },
+    userId: { type: GraphQLString },
+    sheetId: { type: GraphQLString },
+    items: {
+      type: new GraphQLList(ThoughtItemType),
+      resolve(parent, _) {
+        return ThoughtItem.find({ thoughtId: parent._id });
+      },
+    },
+    type: { type: GraphQLString },
+    startTime: { type: GraphQLString },
+    endTime: { type: GraphQLString },
+  }),
+});
+
+const ThoughtsType = new GraphQLObjectType({
+  name: "ThoughtsType",
+  fields: () => ({
+    today: {
+      type: ThoughtType,
+      resolve(parent, _) {
+        return Thought.findById(parent.today);
+      },
+    },
+    tomorrow: {
+      type: ThoughtType,
+      resolve(parent, _) {
+        return Thought.findById(parent.tomorrow);
+      },
+    },
+    work: {
+      type: ThoughtType,
+      resolve(parent, _) {
+        return Thought.findById(parent.work);
+      },
+    },
+    art: {
+      type: ThoughtType,
+      resolve(parent, _) {
+        return Thought.findById(parent.art);
+      },
+    },
+  }),
+});
+
 const SheetType = new GraphQLObjectType({
   name: "SheetType",
   fields: () => ({
@@ -153,6 +222,23 @@ const ExpenseType = new GraphQLObjectType({
   }),
 });
 
+// const JournalType = new GraphQLObjectType({
+//   name: "JournalType",
+//   fields: () => ({
+//     _id: { type: GraphQLString },
+//     userId: { type: GraphQLString },
+//     items: {
+//       type: new GraphQLList(ThoughtItemType),
+//       resolve(parent, _) {
+//         return ThoughtItem.find({ thoughtId: parent._id });
+//       },
+//     },
+//     type: { type: GraphQLString },
+//     startTime: { type: GraphQLString },
+//     endTime: { type: GraphQLString },
+//   }),
+// });
+
 const DeleteResponseType = new GraphQLObjectType({
   name: "DeleteResponseType",
   fields: () => ({
@@ -168,6 +254,10 @@ module.exports = {
   TodoType,
   TodoItemType,
   TodoItemActionType,
+  ThoughtType,
+  ThoughtItemType,
+  ThoughtItemActionType,
   ExpenseType,
   DeleteResponseType,
+  // JournalType,
 };

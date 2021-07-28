@@ -4,6 +4,9 @@ const DayQueries = require("./days");
 const TodoQueries = require("./todos");
 const TodoItemQueries = require("./todoItems");
 const ExpenseQueries = require("./expenses");
+const JournalQueries = require("./journals");
+const ThoughtQueries = require("./thoughts");
+const ThoughtItemQueries = require("./thoughtItems");
 const { GraphQLObjectType } = qraphql;
 
 module.exports = new GraphQLObjectType({
@@ -14,5 +17,8 @@ module.exports = new GraphQLObjectType({
     ...TodoQueries,
     ...TodoItemQueries,
     ...ExpenseQueries,
+    ...JournalQueries,
+    ...ThoughtQueries,
+    ...ThoughtItemQueries,
   },
 });
